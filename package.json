@@ -1,0 +1,12 @@
+{
+  "name": "pendu-discord",
+  "version": "0.0.1",
+  "description": "Un bot Discord pour jouer au pendu",
+  "main": "pendu.js",
+  "author": "Diinn0",
+  "dependencies": {
+    "@discordjs/rest": "^1.1.0",
+    "discord.js": "^14.3.0",
+    "node-fetch": "^3.2.10"
+  }
+}
