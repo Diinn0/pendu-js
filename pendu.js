@@ -19,6 +19,9 @@ let lettreUsed = "";
 
 let msgId = "";
 
+const difficulty = [100, 80, 50, 0];
+let diff = 80;
+
 // Create a new client instance
 const client = new Client({ intents: [
     GatewayIntentBits.Guilds,
@@ -40,7 +43,7 @@ client.login(token);
 
 
 client.on('messageCreate', async  interaction => {
-   if (interaction.author.bot === true) return;
+   if (interaction.author.bot) return;
    if (interaction.channel.id !== channel && interaction.channel.type !== 1) return;
 
    const msg = interaction.content;
@@ -51,7 +54,35 @@ client.on('messageCreate', async  interaction => {
        return;
    }
 
+   if (msg.startsWith('/difficulty')) {
+       canal.send("Voici les difficultés disponible: easy, normal, hard et impossible.");
+       canal.send("Usage: /pendu [difficulté]");
+       return;
+   }
+
    if (msg.startsWith("/pendu") && !gameStarted) {
+       if (interaction.channel.type !== 1) await interaction.delete();
+
+       if (msg.includes(' ')) {
+           let msgs = msg.split(' ');
+
+           switch (msgs[1].toUpperCase()) {
+               case "EASY":
+                   diff = 100;
+                   break;
+               case "HARD":
+                   diff = 50;
+                   break;
+               case "IMPOSSIBLE":
+                   diff = 0;
+                   break;
+               default:
+                   diff = 80;
+           }
+       } else {
+           diff = 80;
+       }
+
        mot = mots.liste_mot[Math.round(Math.random() * mots.liste_mot.length)];
        gameStarted = true;
        essai = 0;
@@ -63,16 +94,17 @@ client.on('messageCreate', async  interaction => {
            motc += " _";
        }
 
-       essaiMax = Math.floor(mot.length*80/100);
+       essaiMax = Math.floor(mot.length*diff/100);
        // essaiMax = 6;
 
        const embed = new EmbedBuilder()
            .setTitle("`>" + motc + "<`")
-           .setDescription(affPendu(Math.round(essai*6/essaiMax)))
+           .setDescription(essaiMax > 0 ? affPendu(Math.round(essai*6/essaiMax)) : affPendu(6))
            .setColor(0xd128cc)
            .addFields(
                { name: 'Essai restant', value: essai + "/" + essaiMax, inline: true },
                { name: 'Lettre utilisé', value: lettreUsed, inline: true },
+               { name: 'Difficulté', value: getDifficultyTxt(diff), inline: true},
            );
 
        // canal.send("`" + motc + "`");
@@ -109,11 +141,12 @@ client.on('messageCreate', async  interaction => {
 
                const embed = new EmbedBuilder()
                    .setTitle("`>" + motc + "<`")
-                   .setDescription(affPendu(Math.round(essai*6/essaiMax)))
+                   .setDescription(essaiMax > 0 ? affPendu(Math.round(essai*6/essaiMax)) : affPendu(6))
                    .setColor(0xd128cc)
                    .addFields(
                        { name: 'Essai restant', value: essai + "/" + essaiMax, inline: true },
                        { name: 'Lettre utilisé', value: lettreUsed, inline: true },
+                       { name: 'Difficulté', value: getDifficultyTxt(diff), inline: true},
                    );
 
                if (!motc.match("_")) {
@@ -139,7 +172,7 @@ client.on('messageCreate', async  interaction => {
                    });
                }
 
-               if (essai >= essaiMax) {
+               if (essai >= essaiMax && error) {
                    canal.send("Pendu ! le mot était " + mot);
                    canal.send("https://fr.wiktionary.org/wiki/" + mot.toLowerCase());
                    canal.send("https://fr.wikipedia.org/wiki/" + mot.toLowerCase());
@@ -187,6 +220,22 @@ client.on('messageCreate', async  interaction => {
 String.prototype.replaceAt = function(index, replacement) {
     return this.substring(0, index) + replacement + this.substring(index + replacement.length);
 }
+
+function getDifficultyTxt(diff) {
+
+    switch (diff) {
+        case 100:
+            return "Easy";
+        case 50:
+            return "Hard";
+        case 0:
+            return "Impossible";
+        default:
+            return "Normal";
+    }
+
+}
+
 
 function affPendu(pErreur) {
     /*
