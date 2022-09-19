@@ -10,17 +10,17 @@ const { Routes } = require('discord.js');
 
 const mots = require('./mots.json');
 
-let mot = "";
-let motc = "";
+let word = "";
+let wordBlank = "";
 let gameStarted = false;
-let essaiMax = 6;
-let essai = 0;
-let lettreUsed = "";
+let maxAttempt = 6;
+let attempt = 0;
+let letterUsed = "";
 
 let msgId = "";
 
 const difficulty = [100, 80, 50, 0];
-let diff = 80;
+let difficultySelected = 80;
 
 // Create a new client instance
 const client = new Client({ intents: [
@@ -68,46 +68,46 @@ client.on('messageCreate', async  interaction => {
 
            switch (msgs[1].toUpperCase()) {
                case "EASY":
-                   diff = 100;
+                   difficultySelected = 100;
                    break;
                case "HARD":
-                   diff = 50;
+                   difficultySelected = 50;
                    break;
                case "IMPOSSIBLE":
-                   diff = 0;
+                   difficultySelected = 0;
                    break;
                default:
-                   diff = 80;
+                   difficultySelected = 80;
            }
        } else {
-           diff = 80;
+           difficultySelected = 80;
        }
 
-       mot = mots.liste_mot[Math.round(Math.random() * mots.liste_mot.length)];
+       word = mots.liste_mot[Math.round(Math.random() * mots.liste_mot.length)];
        gameStarted = true;
-       essai = 0;
-       lettreUsed = "Aucune";
+       attempt = 0;
+       letterUsed = "Aucune";
        msgId = "";
 
-       motc = mot[0];
-       for (let i = 1; i < mot.length; i++) {
-           motc += " _";
+       wordBlank = word[0];
+       for (let i = 1; i < word.length; i++) {
+           wordBlank += " _";
        }
 
-       essaiMax = Math.floor(mot.length*diff/100);
-       // essaiMax = 6;
+       maxAttempt = Math.floor(word.length*difficultySelected/100);
+       // maxAttempt = 6;
 
        const embed = new EmbedBuilder()
-           .setTitle("`>" + motc + "<`")
-           .setDescription(essaiMax > 0 ? affPendu(Math.round(essai*6/essaiMax)) : affPendu(6))
+           .setTitle("`>" + wordBlank + "<`")
+           .setDescription(maxAttempt > 0 ? affPendu(Math.round(attempt*6/maxAttempt)) : affPendu(6))
            .setColor(0xd128cc)
            .addFields(
-               { name: 'Essai restant', value: essai + "/" + essaiMax, inline: true },
-               { name: 'Lettre utilisé', value: lettreUsed, inline: true },
-               { name: 'Difficulté', value: getDifficultyTxt(diff), inline: true},
+               { name: 'Essai restant', value: attempt + "/" + maxAttempt, inline: true },
+               { name: 'Lettre utilisé', value: letterUsed, inline: true },
+               { name: 'Difficulté', value: getDifficultyTxt(difficultySelected), inline: true},
            );
 
-       // canal.send("`" + motc + "`");
+       // canal.send("`" + wordBlank + "`");
 
        canal.send({embeds: [embed]}).then(sent => {
            msgId = sent.id;
@@ -124,42 +124,42 @@ client.on('messageCreate', async  interaction => {
                // }
 
                let error = true;
-               for (let i = 1; i < mot.length; i++) {
-                   if (mot[i] === msg.toUpperCase()) {
-                       motc = motc.replaceAt(i*2, msg.toUpperCase());
+               for (let i = 1; i < word.length; i++) {
+                   if (word[i] === msg.toUpperCase()) {
+                       wordBlank = wordBlank.replaceAt(i*2, msg.toUpperCase());
                        error = false;
                    }
                }
 
                if (error) {
-                   if (!lettreUsed.includes(msg.toUpperCase())) {
-                       essai++;
-                       if (lettreUsed === "Aucune") lettreUsed = "";
-                       lettreUsed += msg.toUpperCase();
+                   if (!letterUsed.includes(msg.toUpperCase())) {
+                       attempt++;
+                       if (letterUsed === "Aucune") letterUsed = "";
+                       letterUsed += msg.toUpperCase();
                    }
                }
 
                const embed = new EmbedBuilder()
-                   .setTitle("`>" + motc + "<`")
-                   .setDescription(essaiMax > 0 ? affPendu(Math.round(essai*6/essaiMax)) : affPendu(6))
+                   .setTitle("`>" + wordBlank + "<`")
+                   .setDescription(maxAttempt > 0 ? affPendu(Math.round(attempt*6/maxAttempt)) : affPendu(6))
                    .setColor(0xd128cc)
                    .addFields(
-                       { name: 'Essai restant', value: essai + "/" + essaiMax, inline: true },
-                       { name: 'Lettre utilisé', value: lettreUsed, inline: true },
-                       { name: 'Difficulté', value: getDifficultyTxt(diff), inline: true},
+                       { name: 'Essai restant', value: attempt + "/" + maxAttempt, inline: true },
+                       { name: 'Lettre utilisé', value: letterUsed, inline: true },
+                       { name: 'Difficulté', value: getDifficultyTxt(difficultySelected), inline: true},
                    );
 
-               if (!motc.match("_")) {
+               if (!wordBlank.match("_")) {
                    gameStarted = false;
                    canal.messages.fetch(msgId).then(message => {
                        message.edit({embeds: [embed]});
                    });
-                   canal.send("https://fr.wiktionary.org/wiki/" + mot.toLowerCase());
-                   canal.send("https://fr.wikipedia.org/wiki/" + mot.toLowerCase());
+                   canal.send("https://fr.wiktionary.org/wiki/" + word.toLowerCase());
+                   canal.send("https://fr.wikipedia.org/wiki/" + word.toLowerCase());
                    return;
                }
 
-               // canal.send("`" + motc + "`");
+               // canal.send("`" + wordBlank + "`");
 
 
                if (msgId === "") {
@@ -172,10 +172,10 @@ client.on('messageCreate', async  interaction => {
                    });
                }
 
-               if (essai >= essaiMax && error) {
-                   canal.send("Pendu ! le mot était " + mot);
-                   canal.send("https://fr.wiktionary.org/wiki/" + mot.toLowerCase());
-                   canal.send("https://fr.wikipedia.org/wiki/" + mot.toLowerCase());
+               if (attempt >= maxAttempt && error) {
+                   canal.send("Pendu ! le word était " + word);
+                   canal.send("https://fr.wiktionary.org/wiki/" + word.toLowerCase());
+                   canal.send("https://fr.wikipedia.org/wiki/" + word.toLowerCase());
                    gameStarted = false;
                    return;
                }
@@ -196,9 +196,9 @@ client.on('messageCreate', async  interaction => {
            //     canal.send(sen);
            //
            //
-           //     if (mot === msg.toUpperCase()) {
-           //         canal.send("Pendu !, le mot était " + mot);
-           //         canal.send("https://fr.wiktionary.org/wiki/" + mot.toLowerCase());
+           //     if (word === msg.toUpperCase()) {
+           //         canal.send("Pendu !, le word était " + word);
+           //         canal.send("https://fr.wiktionary.org/wiki/" + word.toLowerCase());
            //         gameStarted = false;
            //         return;
            //     }
